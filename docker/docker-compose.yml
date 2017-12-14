@@ -1,0 +1,40 @@
+version: '3'
+services:
+    mysql_laravel:
+        image: mysql:latest
+        environment:
+            - MYSQL_ROOT_PASSWORD=secret
+            - MYSQL_USER=laravel
+            - MYSQL_PASSWORD=secret
+            - MYSQL_DATABASE=laravel
+        ports:
+            - 3306:3306
+    web_laravel:
+        image: nginx:latest
+        ports:
+            - "80:80"
+        volumes:
+            - ../:/var/www/laravel
+            - ./site.conf:/etc/nginx/conf.d/site.conf
+        links:
+            - php_laravel
+    php_laravel:
+        build: site
+        volumes:
+            - ../:/var/www/laravel
+        environment:
+            PHP_XDEBUG_ENABLED: 1            
+            # XDEBUG_CONFIG: remote_host=10.254.254.254
+        external_links:
+            - mysql_laravel:mysql
+        # healthcheck:
+        #     test: ["CMD-SHELL", "ps aux | grep php-fpm | grep -v grep && cd ../laravel && php artisan migrate --seed"]
+        #     interval: 5s
+        #     timeout: 5m
+        #     retries: 15
+    pma_laravel:
+        image: phpmyadmin/phpmyadmin
+        external_links:
+            - mysql_laravel:db
+        ports:
+            - 81:80
